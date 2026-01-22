@@ -1,16 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>XMA Store</title>
-    </head>
-    <body class="body">
-
-    </body>
-    <style>
-        .body{
-            background: #010101;
-            background: linear-gradient(135deg, #010101 0%, #190038 90%);
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMA Store</title>
+    <!-- Подключение Tailwind CSS через CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Настройка конфигурации Tailwind для темной темы по умолчанию -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#010101',
+                        'dark-card': '#212020',
+                        'dark-gradient-end': '#190038',
+                        'purple-border': '#414141', // custom border color
+                    }
+                }
+            }
         }
-    </style>
+    </script>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start pt-24 bg-dark-bg bg-gradient-to-br from-dark-bg to-dark-gradient-end text-white">
+
+<!-- Главный контейнер (карточка) с границей -->
+<div class="flex flex-col w-full max-w-md p-6 rounded-xl shadow-lg bg-dark-card space-y-4 border-2 border-purple-border">
+
+    <!-- Первая строка: Full Time Develop и $1,000,000 -->
+    <div class="flex justify-between items-center text-xl font-semibold">
+        <span class="text-gray-400">Full-time Development</span>
+        <span>1 000 000 $</span>
+    </div>
+
+    <div class="relative w-full bg-gray-700 rounded-full h-12 overflow-hidden border-2 border-purple-border">
+        <div class="bg-yellow-600 h-full" style="width: 10%;"></div>
+
+        <!-- Текст внутри шкалы -->
+        <div class="absolute inset-0 flex justify-between items-center px-4 text-base font-medium">
+            <span>Raised 120 near</span>
+            <span>120 000 near</span>
+        </div>
+    </div>
+
+    <div class="flex items-center">
+        <div class="flex-grow bg-gray-700/50 p-3 rounded-lg flex items-center justify-center border-2 border-purple-border">
+            <span class="text-xl font-mono truncate">xmastore.near</span>
+        </div>
+        <button onclick="navigator.clipboard.writeText('xmastore.near')" class="ml-6 px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition duration-150 ease-in-out">
+            COPY
+        </button>
+        <div id="toast-container" style="position: fixed; top: 300px; right: 45%"></div>
+    </div>
+</div>
+
+<!-- Небольшой скрипт для обработки копирования -->
+<script>
+    document.querySelector('button').addEventListener('click', () => {
+        //alert('Адрес скопирован!');
+        showToast('Адрес скопирован!', 500);
+    });
+    function showToast(message, duration) {
+        const toastContainer = document.getElementById('toast-container');
+        const toastElement = document.createElement('div');
+        toastElement.className = 'toast'; // Для стилизации
+        toastElement.textContent = message;
+        toastElement.style.padding = '10px';
+        toastElement.style.backgroundColor = '#333';
+        toastElement.style.color = 'white';
+        toastElement.style.borderRadius = '5px';
+        toastElement.style.marginBottom = '10px';
+        toastElement.style.opacity = '0'; // Начальное состояние для анимации
+        toastElement.style.transition = 'opacity 0.3s ease-in-out';
+
+        toastContainer.appendChild(toastElement);
+
+        // Показываем (плавно)
+        setTimeout(() => {
+            toastElement.style.opacity = '1';
+        }, 10); // Небольшая задержка, чтобы transition сработал
+
+        // Скрываем через 500ms
+        setTimeout(() => {
+            toastElement.style.opacity = '0';
+            // Удаляем элемент из DOM после завершения анимации
+            setTimeout(() => {
+                toastElement.remove();
+            }, 300); // Ждем завершения fade-out
+        }, duration);
+    }
+
+</script>
+</body>
 </html>
