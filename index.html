@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XMA Store</title>
-    <!-- Подключение Tailwind CSS через CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js"></script>
     <!-- Настройка конфигурации Tailwind для темной темы по умолчанию -->
     <script>
         tailwind.config = {
@@ -34,12 +34,12 @@
     </div>
 
     <div class="relative w-full bg-gray-700 rounded-full h-12 overflow-hidden border-2 border-purple-border">
-        <div class="bg-yellow-600 h-full" style="width: 10%;"></div>
+        <div id="loader" class="bg-yellow-600 h-full loaderStyle"></div>
 
         <!-- Текст внутри шкалы -->
         <div class="absolute inset-0 flex justify-between items-center px-4 text-base font-medium">
-            <span>Raised 120 near</span>
-            <span>120 000 near</span>
+            <span class="drop-shadow-[0_0_5px_rgba(0,0,0,1)]">Raised <span id="raisedCount"></span> near</span>
+            <span><span id="raisedNeed"></span> near</span>
         </div>
     </div>
 
@@ -56,9 +56,10 @@
 
 <!-- Небольшой скрипт для обработки копирования -->
 <script>
+
     document.querySelector('button').addEventListener('click', () => {
         //alert('Адрес скопирован!');
-        showToast('Адрес скопирован!', 500);
+        showToast('Address copied!', 700);
     });
     function showToast(message, duration) {
         const toastContainer = document.getElementById('toast-container');
@@ -90,6 +91,103 @@
         }, duration);
     }
 
+    async function updateNearBalance() {
+        // Настройки сети (mainnet или testnet)
+        const config = {
+            networkId: "mainnet",
+            nodeUrl: "https://rpc.mainnet.near.org",
+            walletUrl: "https://wallet.near.org",
+            helperUrl: "https://helper.mainnet.near.org",
+            explorerUrl: "https://explorer.near.org",
+        };
+
+        // ID кошелька, баланс которого нужно получить
+        const accountId = "xmastore.near";
+
+        try {
+            // 1. Подключаемся к сети
+            const near = await nearApi.connect(config);
+
+            // 2. Получаем объект аккаунта
+            const account = await near.account(accountId);
+
+            // 3. Получаем состояние аккаунта (включая баланс)
+            const balance = await account.getAccountBalance();
+
+            // 4. Конвертируем из YoctoNEAR в NEAR (1 NEAR = 10^24 YoctoNEAR)
+            // Используем встроенный метод форматирования
+            const amountInNear = nearApi.utils.format.formatNearAmount(balance.available, 0);
+
+            // 5. Записываем результат в элемент
+            const element = document.getElementById('raisedCount');
+            if (element) {
+                element.innerText = amountInNear;
+            }
+            await getNearPrice();
+
+        } catch (error) {
+            console.error("Ошибка при получении баланса NEAR:", error);
+            document.getElementById('raisedCount').innerText = "0";
+        }
+    }
+
+    // Выполняем функцию при загрузке окна
+    window.addEventListener('load', updateNearBalance);
+
+    async function getNearPrice() {
+        try {
+            // Запрос к публичному API Binance для пары NEAR/USDT
+            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true');
+            const data = await response.json();
+
+            // Цена возвращается в виде строки, преобразуем в число
+            const maxCount = parseFloat(1000000.00).toFixed(2);
+            let price = parseFloat(data.near.usd).toFixed(2);
+            price = maxCount / price
+            price = parseFloat(price).toFixed(0);
+
+            // Вставляем в ваш элемент (из предыдущего вопроса)
+            const raisedCount = document.getElementById('raisedCount');
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.width = getPercentage(raisedCount.innerText, price) + '%';
+            }
+
+            price = formatNumberWithSpaces(price);
+
+            const element = document.getElementById('raisedNeed');
+            if (element) {
+                element.innerText = price;
+            }
+
+            return price;
+        } catch (error) {
+            console.error("Ошибка при получении цены:", error);
+            return null;
+        }
+    }
+    function formatNumberWithSpaces(number) {
+        return new Intl.NumberFormat('en-EN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 20
+        }).format(number);
+    }
+    function getPercentage(part, total, decimals = 2) {
+        if (total === 0) return '0';
+
+        const percentage = (part / total) * 100;
+
+        return percentage.toFixed(decimals);
+    }
 </script>
+<style>
+    .loaderStyle {
+        width: 0;
+        transition: width 2s ease-in-out;
+    }
+    .loaderStyle.animated  {
+        transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+</style>
 </body>
 </html>
